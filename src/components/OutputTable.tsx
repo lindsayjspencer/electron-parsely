@@ -1,21 +1,15 @@
 import * as React from 'react';
-import { useEffect } from 'react';
 import styled from 'styled-components';
-import { InputRow, OutputRow } from '_/main/types';
+import { ReactInputRow, ReactOutputRow } from './App';
 
 interface OutputTableProps {
-	outputData: Array<OutputRow>;
-	errorData: Array<InputRow> | undefined;
+	outputData: Array<ReactOutputRow>;
+	errorData: Array<ReactInputRow> | undefined;
 	inputFileName?: string; 
+	onRowClick: (outputLine: ReactOutputRow | ReactInputRow) => void;
 }
 
 export default function OutputTable(props: OutputTableProps) {
-
-	useEffect(() => {
-
-		console.log(props.outputData);
-
-	}, [props.outputData]);
 
 	return (
 		<>
@@ -31,8 +25,8 @@ export default function OutputTable(props: OutputTableProps) {
 					</tr>					
 				</thead>
 				<tbody>
-					{props.outputData.map((outputLine, i) => <TableRow key={i} outputLine={outputLine} />)}
-					{props.errorData && props.errorData.map((outputLine, i) => <ErrorTableRow key={i} outputLine={outputLine} />)}
+					{props.outputData.map((outputLine, i) => <TableRow key={i} outputLine={outputLine} onClick={() => props.onRowClick(outputLine)} />)}
+					{props.errorData && props.errorData.map((outputLine, i) => <ErrorTableRow key={i} outputLine={outputLine} onClick={() => props.onRowClick(outputLine)} />)}
 				</tbody>
 			</table>
 		</OutputTableContainer>
@@ -57,17 +51,27 @@ const OutputTableContainer = styled.div`
 
 `;
 
-const StyledErrorTableRow = styled.tr`
-
-&&&& {
-	background: var(--red);
-	color: white;
+interface TableRowProps {
+	selected: boolean;
+	onClick: () => void;
 }
+
+const StyledErrorTableRow = styled.tr<TableRowProps>`
+	&&&& {
+		background: ${props => props.selected ? 'var(--blue)' : 'var(--red)'};
+		color: white;
+	}
 `;
 
-const ErrorTableRow = (props: { outputLine: InputRow }) => {
+const StyledTableRow = styled.tr<TableRowProps>`
+	&&&& {
+		${props => props.selected ? 'background: var(--blue);color: white;' : ''}
+	}
+`;
+
+const ErrorTableRow = (props: { outputLine: ReactInputRow, onClick: () => void }) => {
 	return (
-		<StyledErrorTableRow>
+		<StyledErrorTableRow onClick={props.onClick} selected={props.outputLine.selected}>
 			<td></td>
 			<td>{props.outputLine.Saldo}</td>
 			<td>{props.outputLine.NaamCrediteur}</td>
@@ -77,14 +81,14 @@ const ErrorTableRow = (props: { outputLine: InputRow }) => {
 	)
 }
 
-const TableRow = (props: { outputLine: OutputRow }) => {
+const TableRow = (props: { outputLine: ReactOutputRow, onClick: () => void }) => {
 	return (
-		<tr>
+		<StyledTableRow onClick={props.onClick} selected={props.outputLine.selected}>
 			<td>{props.outputLine.Account}</td>
 			<td>{props.outputLine.Amount}</td>
 			<td>{props.outputLine.Name}</td>
 			<td>{props.outputLine.Routing}</td>
 			<td>{props.outputLine.Type}</td>
-		</tr>
+		</StyledTableRow>
 	)
 }
