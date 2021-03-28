@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { useEffect } from 'react';
 import styled from 'styled-components';
-import { OutputRow } from '_/main/types';
+import { InputRow, OutputRow } from '_/main/types';
 
 interface OutputTableProps {
 	outputData: Array<OutputRow>;
+	errorData: Array<InputRow> | undefined;
 	inputFileName?: string; 
 }
 
@@ -31,6 +32,7 @@ export default function OutputTable(props: OutputTableProps) {
 				</thead>
 				<tbody>
 					{props.outputData.map((outputLine, i) => <TableRow key={i} outputLine={outputLine} />)}
+					{props.errorData && props.errorData.map((outputLine, i) => <ErrorTableRow key={i} outputLine={outputLine} />)}
 				</tbody>
 			</table>
 		</OutputTableContainer>
@@ -54,6 +56,26 @@ const OutputTableContainer = styled.div`
 	}
 
 `;
+
+const StyledErrorTableRow = styled.tr`
+
+&&&& {
+	background: var(--red);
+	color: white;
+}
+`;
+
+const ErrorTableRow = (props: { outputLine: InputRow }) => {
+	return (
+		<StyledErrorTableRow>
+			<td></td>
+			<td>{props.outputLine.Saldo}</td>
+			<td>{props.outputLine.NaamCrediteur}</td>
+			<td></td>
+			<td></td>
+		</StyledErrorTableRow>
+	)
+}
 
 const TableRow = (props: { outputLine: OutputRow }) => {
 	return (

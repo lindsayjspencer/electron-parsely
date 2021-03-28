@@ -9,7 +9,7 @@ export interface AccountRow {
 export interface InputRow {
 	NaamCrediteur: string;
 	CodeCrediteur: string;
-	Saldo: string;
+	Saldo: number;
 }
 
 export interface OutputRow {
@@ -17,7 +17,7 @@ export interface OutputRow {
 	Account: string;
 	Routing: string;
 	Type: string;
-	Amount: string;
+	Amount: number;
 }
 
 export interface StoreOptions {

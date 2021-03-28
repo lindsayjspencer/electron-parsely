@@ -18,6 +18,36 @@ const fs = require("fs");
 let accounts: AccountRow[] | null;
 let currentInput: InputRow[] | null;
 let outputData: OutputRow[] | null;
+let errorOutput: InputRow[] | null;
+
+const setAccounts = (data: AccountRow[] | null) => {
+	store.set("accounts", data);
+	accounts = data;
+	mainWindow?.webContents.send("accountsData", data);
+	checkFilesAndParsely();
+}
+
+const setCurrentInput = (data: InputRow[] | null) => {
+	store.set("currentInput", data);
+	currentInput = data;
+	mainWindow?.webContents.send("inputData", data);
+	checkFilesAndParsely();
+}
+
+const setOutputData = (data: OutputRow[] | null) => {
+	outputData = data;
+	mainWindow?.webContents.send("outputData", data);
+}
+
+const setErrorOutputData = (data: InputRow[] | null) => {
+	errorOutput = data;
+	mainWindow?.webContents.send("errorOutputData", data);
+}
+
+const loadStoreData = () => {
+	setAccounts(store.get("accounts"));
+	setCurrentInput(store.get("currentInput"));
+}
 
 let mainWindow: Electron.BrowserWindow | null;
 
@@ -112,10 +142,6 @@ function createWindow(): void {
 		},
 	]);
 	Menu.setApplicationMenu(menu);
-
-	accounts = store.get('accounts');
-	currentInput = store.get('currentInput');
-	checkFilesAndParsely();
 	
 }
 
@@ -179,6 +205,17 @@ ipcMain.on("getOutputData", async (event, arg) => {
 	event.reply("outputData", accounts);
 	checkFilesAndParsely();
 });
+ipcMain.on("onLoad", async (event, arg) => {
+	loadStoreData();
+	checkFilesAndParsely();
+});
+
+ipcMain.on("requestAccountsFile", async (event, arg) => {
+	getAccountsJSON();
+});
+ipcMain.on("requestInputFile", async (event, arg) => {
+	getInputJSON();
+});
 
 const sendStatus = (status: string) => {
 	mainWindow?.webContents.send("status", status);
@@ -237,11 +274,12 @@ const getAccountsJSON = async () => {
 		const accountsJSON = await loadFileSwitch(res.filePaths[0]);
 
 		if (!Array.isArray(accountsJSON)) return;
-		store.set("accounts", accountsJSON);
 
-		mainWindow?.webContents.send("accountsData", accountsJSON);
+		setAccounts(accountsJSON);
 
 		checkFilesAndParsely();
+		
+		sendStatus("Accounts file selected");		
 
 	});
 };
@@ -260,12 +298,12 @@ const getInputJSON = async () => {
 		const inputJSON = await loadFileSwitch(res.filePaths[0]);
 
 		if (!Array.isArray(inputJSON)) return;
-		store.set("currentInput", inputJSON);
-		currentInput = inputJSON;
 
-		mainWindow?.webContents.send("inputData", inputJSON);
+		setCurrentInput(inputJSON);
 
 		checkFilesAndParsely();
+		
+		sendStatus("Input file selected");		
 
 	});
 };
@@ -283,6 +321,7 @@ const writeOutput = async () => {
 				if (err) {
 					return;
 				}
+				sendStatus("Output saved succesfully");			
 			});
 		});
 	});
@@ -296,8 +335,8 @@ const checkFilesAndParsely = async () => {
 	if(!Array.isArray(currentInput)) return;
 
 	const { outputJSON, errors } = await parsely(accounts, currentInput);
-	outputData = [...outputJSON];
 
-	mainWindow?.webContents.send("outputData", outputJSON);
+	setOutputData([...outputJSON]);
+	setErrorOutputData([...errors]);
 
 }
