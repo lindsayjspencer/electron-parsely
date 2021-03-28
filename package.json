@@ -34,14 +34,18 @@
   "author": "Lindsay/Nick",
   "license": "MIT",
   "dependencies": {
+    "@types/node-xlsx": "^0.15.1",
+    "@types/styled-components": "^5.1.9",
     "bootstrap": "^4.6.0",
     "csvtojson": "^2.0.10",
     "jsonexport": "^3.2.0",
     "moment": "^2.29.1",
+    "node-xlsx": "^0.16.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0"
+    "react-router-dom": "^5.2.0",
+    "styled-components": "^5.2.1"
   },
   "devDependencies": {
     "@types/mocha": "^8.2.0",

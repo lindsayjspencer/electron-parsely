@@ -3,6 +3,7 @@
  */
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
+import xlsx from 'node-xlsx';
 import * as path from "path";
 import * as url from "url";
 import Store from "./Store";
@@ -69,6 +70,12 @@ function createWindow(): void {
 					label: "Import input file",
 					click() {
 						getInputJSON();
+					},
+				},
+				{
+					label: "Save output",
+					click() {
+						writeOutput();
 					},
 				},
 				{ type: 'separator'},
@@ -153,6 +160,7 @@ const resetAccountsFile = () => {
 
 const resetInputFile = () => {
 	store.set("currentInput", null);
+	currentInput = null;
 	mainWindow?.webContents.send("inputData", null);
 };
 
@@ -163,17 +171,63 @@ ipcMain.on("getAccountsData", async (event, arg) => {
 	event.reply("accountsData", accounts);
 	checkFilesAndParsely();
 });
+ipcMain.on("getInputData", async (event, arg) => {
+	event.reply("inputData", accounts);
+	checkFilesAndParsely();
+});
+ipcMain.on("getOutputData", async (event, arg) => {
+	event.reply("outputData", accounts);
+	checkFilesAndParsely();
+});
+
+const sendStatus = (status: string) => {
+	mainWindow?.webContents.send("status", status);
+}
+
+const validateExtension = (extensions: Array<string>, filename: string) => {
+
+	// Extensions
+	var extension = getFileExtension(filename);
+	if(extensions.indexOf(extension)==-1) {
+		sendStatus("Bad extension");
+		return false;
+	}
+	return true;
+
+}
+
+const getFileExtension = (filename: string) => {
+	var pieces = filename.split(".");
+	return pieces[pieces.length-1];
+}
+
+const loadFileSwitch = (filename: string) => {
+
+	const extension = getFileExtension(filename);
+	switch(extension) {
+		case "csv":
+			return csv().fromFile(filename);
+		case "xls":
+			return xlsx.parse(filename);
+		case "xlsx":
+			return xlsx.parse(filename);
+	}
+}
 
 const getAccountsJSON = async () => {
 	if (!mainWindow) return;
 
 	dialog.showOpenDialog(mainWindow).then(async (res) => {
 		if (res.canceled) {
-			console.log("No file selected");
+			sendStatus("No file selected");
 			return;
 		}
 
-		const accountsJSON = await csv().fromFile(res.filePaths[0]);
+		if(!validateExtension(acceptedExtensions, res.filePaths[0])) return;
+
+		const accountsJSON = await loadFileSwitch(res.filePaths[0]);
+
+		console.log(accountsJSON);
 
 		if (!Array.isArray(accountsJSON)) return;
 		store.set("accounts", accountsJSON);
@@ -190,9 +244,11 @@ const getInputJSON = async () => {
 
 	dialog.showOpenDialog(mainWindow).then(async (res) => {
 		if (res.canceled) {
-			console.log("No file selected");
+			sendStatus("No file selected");
 			return;
 		}
+
+		if(!validateExtension(acceptedExtensions, res.filePaths[0])) return;
 
 		const inputJSON = await csv().fromFile(res.filePaths[0]);
 
@@ -203,6 +259,24 @@ const getInputJSON = async () => {
 
 		checkFilesAndParsely();
 
+	});
+};
+
+const writeOutput = async () => {
+	if (!mainWindow || !outputData) return;
+
+	dialog.showSaveDialog(mainWindow).then(async (res) => {
+		if (res.canceled) {
+			sendStatus("No file selected");
+			return;
+		}
+		jsonexport(outputData, function (err: string, file: string) {
+			fs.writeFile(res.filePath, file, function (err: string) {
+				if (err) {
+					return;
+				}
+			});
+		});
 	});
 };
 

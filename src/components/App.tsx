@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { AccountRow, InputRow, OutputRow } from '_/main/types';
 import BottomNav from './BottomNav';
 import OutputTable from './OutputTable';
@@ -27,6 +28,9 @@ export default function App() {
 		ipcRenderer.on('outputData', (event, data) => {
 			setOutputData(data);
 		});
+		ipcRenderer.on('status', (event, data) => {
+			setStatus(data);
+		});
 	}, [])
 
 	let content = null;
@@ -39,10 +43,17 @@ export default function App() {
 	}
 
 	return (
-		<div className="main">
+		<MainContainer>
 			{content}
 			<BottomNav status={status} />
-		</div>
+		</MainContainer>
 	)
 	
 }
+
+const MainContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	overflow: hidden;
+`;

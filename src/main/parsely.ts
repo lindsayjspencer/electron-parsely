@@ -14,7 +14,7 @@ module.exports = async function (accountsJSON: Array<AccountRow>, inputJSON: Arr
         });
         //If no match
         if (!accountLine) {
-			console.log(`Account ${inputLine.NaamCrediteur} not found`);
+			// console.log(`Account ${inputLine.NaamCrediteur} not found`);
 			errors.push(inputLine);
 			return;
         }
