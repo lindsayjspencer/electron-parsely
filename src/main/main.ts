@@ -208,10 +208,10 @@ const loadFileSwitch = (filename: string) => {
 		case "csv":
 			return csv().fromFile(filename);
 		case "xls":
-			return xlsx.parse(filename)[0].data;
 		case "xlsx":
 			const data = xlsx.parse(filename)[0].data;
 			const headers: Array<string> = data[0] as unknown as Array<string>;
+			data.shift();
 			const returnData = data.map((line) => {
 				const returnLine: { [key: string]: any } = {};
 				headers.forEach((header, i) => {
