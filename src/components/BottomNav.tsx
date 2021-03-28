@@ -20,7 +20,7 @@ export default function BottomNav(props: BottomNavProps) {
 
 const StyledBottomNav = styled.div`
 
-	height: 38px;
+	margin-top: auto;
 	width: 100%;
 	background: white;
 	box-shadow: 0px 0px 33px 1px rgba(0, 0, 0, 0.24);

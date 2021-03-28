@@ -208,9 +208,18 @@ const loadFileSwitch = (filename: string) => {
 		case "csv":
 			return csv().fromFile(filename);
 		case "xls":
-			return xlsx.parse(filename);
+			return xlsx.parse(filename)[0].data;
 		case "xlsx":
-			return xlsx.parse(filename);
+			const data = xlsx.parse(filename)[0].data;
+			const headers: Array<string> = data[0] as unknown as Array<string>;
+			const returnData = data.map((line) => {
+				const returnLine: { [key: string]: any } = {};
+				headers.forEach((header, i) => {
+					returnLine[header] = line[i];
+				});
+				return returnLine;
+			})
+			return returnData;
 	}
 }
 
@@ -226,8 +235,6 @@ const getAccountsJSON = async () => {
 		if(!validateExtension(acceptedExtensions, res.filePaths[0])) return;
 
 		const accountsJSON = await loadFileSwitch(res.filePaths[0]);
-
-		console.log(accountsJSON);
 
 		if (!Array.isArray(accountsJSON)) return;
 		store.set("accounts", accountsJSON);
@@ -250,10 +257,11 @@ const getInputJSON = async () => {
 
 		if(!validateExtension(acceptedExtensions, res.filePaths[0])) return;
 
-		const inputJSON = await csv().fromFile(res.filePaths[0]);
+		const inputJSON = await loadFileSwitch(res.filePaths[0]);
 
 		if (!Array.isArray(inputJSON)) return;
 		store.set("currentInput", inputJSON);
+		currentInput = inputJSON;
 
 		mainWindow?.webContents.send("inputData", inputJSON);
 
