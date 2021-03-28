@@ -1,12 +1,12 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { ReactInputRow, ReactOutputRow } from './App';
+import { ReactOutputRow } from './App';
 
 interface OutputTableProps {
 	outputData: Array<ReactOutputRow>;
-	errorData: Array<ReactInputRow> | undefined;
+	errorData: Array<ReactOutputRow> | undefined;
 	inputFileName?: string; 
-	onRowClick: (outputLine: ReactOutputRow | ReactInputRow) => void;
+	onRowClick: (outputLine: ReactOutputRow) => void;
 }
 
 export default function OutputTable(props: OutputTableProps) {
@@ -35,8 +35,29 @@ export default function OutputTable(props: OutputTableProps) {
 }
 
 const OutputTableContainer = styled.div`
-	max-height: calc(100vh - 38px);
+	max-height: 100vh;
 	overflow: auto;
+	flex-grow: 1;
+
+	/* width */
+	::-webkit-scrollbar {
+	width: 10px;
+	}
+
+	/* Track */
+	::-webkit-scrollbar-track {
+	background: #f1f1f1; 
+	}
+	
+	/* Handle */
+	::-webkit-scrollbar-thumb {
+	background: #888; 
+	}
+
+	/* Handle on hover */
+	::-webkit-scrollbar-thumb:hover {
+	background: #555; 
+	}
 
 	table {
 		position: relative;
@@ -69,12 +90,12 @@ const StyledTableRow = styled.tr<TableRowProps>`
 	}
 `;
 
-const ErrorTableRow = (props: { outputLine: ReactInputRow, onClick: () => void }) => {
+const ErrorTableRow = (props: { outputLine: ReactOutputRow, onClick: () => void }) => {
 	return (
 		<StyledErrorTableRow onClick={props.onClick} selected={props.outputLine.selected}>
 			<td></td>
-			<td>{props.outputLine.Saldo}</td>
-			<td>{props.outputLine.NaamCrediteur}</td>
+			<td>{props.outputLine.Amount}</td>
+			<td>{props.outputLine.Name}</td>
 			<td></td>
 			<td></td>
 		</StyledErrorTableRow>

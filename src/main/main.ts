@@ -15,33 +15,21 @@ const csv = require("csvtojson");
 const moment = require("moment");
 const fs = require("fs");
 
-let accounts: AccountRow[] | null;
-let currentInput: InputRow[] | null;
 let outputData: OutputRow[] | null;
-let errorOutput: InputRow[] | null;
 
 const setAccounts = (data: AccountRow[] | null) => {
 	store.set("accounts", data);
-	accounts = data;
 	mainWindow?.webContents.send("accountsData", data);
-	checkFilesAndParsely();
 }
 
 const setCurrentInput = (data: InputRow[] | null) => {
 	store.set("currentInput", data);
-	currentInput = data;
 	mainWindow?.webContents.send("inputData", data);
-	checkFilesAndParsely();
 }
 
 const setOutputData = (data: OutputRow[] | null) => {
 	outputData = data;
 	mainWindow?.webContents.send("outputData", data);
-}
-
-const setErrorOutputData = (data: InputRow[] | null) => {
-	errorOutput = data;
-	mainWindow?.webContents.send("errorOutputData", data);
 }
 
 const loadStoreData = () => {
@@ -54,8 +42,8 @@ let mainWindow: Electron.BrowserWindow | null;
 function createWindow(): void {
 	// Create the browser window.
 	mainWindow = new BrowserWindow({
-		height: 600,
-		width: 800,
+		height: 800,
+		width: 1200,
 		webPreferences: {
 			nodeIntegration: true, // is default value after Electron v5
 			contextIsolation: false, // protect against prototype pollution
@@ -180,34 +168,22 @@ const store = new Store({
 
 const resetAccountsFile = () => {
 	store.set("accounts", null);
-	accounts = null;
 	mainWindow?.webContents.send("accountsData", null);
 };
 
 const resetInputFile = () => {
 	store.set("currentInput", null);
-	currentInput = null;
 	mainWindow?.webContents.send("inputData", null);
 };
 
 const acceptedExtensions = ["csv", "xls", "xlsx", "txt"];
 
 // Get state
-ipcMain.on("getAccountsData", async (event, arg) => {
-	event.reply("accountsData", accounts);
-	checkFilesAndParsely();
-});
-ipcMain.on("getInputData", async (event, arg) => {
-	event.reply("inputData", accounts);
-	checkFilesAndParsely();
-});
-ipcMain.on("getOutputData", async (event, arg) => {
-	event.reply("outputData", accounts);
-	checkFilesAndParsely();
-});
 ipcMain.on("onLoad", async (event, arg) => {
 	loadStoreData();
-	checkFilesAndParsely();
+});
+ipcMain.on("newOutputData", async (event, arg) => {
+	setOutputData(arg);
 });
 
 ipcMain.on("requestAccountsFile", async (event, arg) => {
@@ -276,8 +252,6 @@ const getAccountsJSON = async () => {
 		if (!Array.isArray(accountsJSON)) return;
 
 		setAccounts(accountsJSON);
-
-		checkFilesAndParsely();
 		
 		sendStatus("Accounts file selected");		
 
@@ -300,8 +274,6 @@ const getInputJSON = async () => {
 		if (!Array.isArray(inputJSON)) return;
 
 		setCurrentInput(inputJSON);
-
-		checkFilesAndParsely();
 		
 		sendStatus("Input file selected");		
 
@@ -326,17 +298,3 @@ const writeOutput = async () => {
 		});
 	});
 };
-
-const checkFilesAndParsely = async () => {
-	
-	if(!accounts) return;
-	if(!currentInput) return;
-	if(!Array.isArray(accounts)) return;
-	if(!Array.isArray(currentInput)) return;
-
-	const { outputJSON, errors } = await parsely(accounts, currentInput);
-
-	setOutputData([...outputJSON]);
-	setErrorOutputData([...errors]);
-
-}

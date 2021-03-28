@@ -1,32 +1,31 @@
 import * as React from 'react';
 import styled from 'styled-components';
 
-interface BottomNavProps {
+interface RightNavProps {
 	status: string;
 }
 
-export default function BottomNav(props: BottomNavProps) {
+export default function RightNav(props: RightNavProps) {
 	return (
-			<StyledBottomNav className="d-flex align-items-center">
+			<StyledRightNav className="d-flex flex-column align-items-center">
 				<div className="title-container">
 					<i className="fas fa-leaf mx-3"></i>
 					<span className="mr-3">Parsley</span>
 				</div>
-				<div className="console-status ml-3 text-muted">{props.status}</div>
-				<div className="ml-auto d-flex btn-container align-self-center"></div>
-			</StyledBottomNav>
+			</StyledRightNav>
 	)
 }
 
-const StyledBottomNav = styled.div`
+const StyledRightNav = styled.div`
 
 	margin-top: auto;
-	width: 100%;
+	width: 256px;
+	height: 100vh;
 	background: white;
 	box-shadow: 0px 0px 33px 1px rgba(0, 0, 0, 0.24);
-	min-height: 38px;
 
 	.title-container {
+		height: 38px;
 		display: flex;
 		align-items: center;
 		align-self: stretch;

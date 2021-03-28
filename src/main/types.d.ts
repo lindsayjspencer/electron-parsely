@@ -14,9 +14,9 @@ export interface InputRow {
 
 export interface OutputRow {
 	Name: string;
-	Account: string;
-	Routing: string;
-	Type: string;
+	Account?: string;
+	Routing?: string;
+	Type?: string;
 	Amount: number;
 }
 
