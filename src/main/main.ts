@@ -29,7 +29,6 @@ const setCurrentInput = (data: InputRow[] | null) => {
 
 const setOutputData = (data: OutputRow[] | null) => {
 	outputData = data;
-	mainWindow?.webContents.send("outputData", data);
 }
 
 const loadStoreData = () => {

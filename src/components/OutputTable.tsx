@@ -1,5 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
+import { AccountRow, InputRow } from '_/main/types';
 import { ReactOutputRow } from './App';
 
 interface OutputTableProps {
@@ -7,6 +8,61 @@ interface OutputTableProps {
 	errorData: Array<ReactOutputRow> | undefined;
 	inputFileName?: string; 
 	onRowClick: (outputLine: ReactOutputRow) => void;
+}
+
+const parsely = (
+	accountsJSON: Array<AccountRow>,
+	inputJSON: Array<InputRow>
+) => {
+	//New empty array for outputs
+	var combinedArray: Array<AccountRow & InputRow> = [];
+	var errors: any = [];
+
+	//Loop through lines of input
+	inputJSON.forEach((inputLine) => {
+		//Search for matching "Name", mark accountLine true if found
+		var accountLine = accountsJSON.find((x) => {
+			return (
+				x.Name === inputLine.NaamCrediteur ||
+				x.Code === inputLine.CodeCrediteur
+			);
+		});
+		//If no match
+		if (!accountLine) {
+			// console.log(`Account ${inputLine.NaamCrediteur} not found`);
+			errors.push({
+				Name: inputLine.NaamCrediteur,
+				Account: undefined,
+				Routing: undefined,
+				Type: undefined,
+				Amount: inputLine.Saldo,
+				selected: false
+			});
+			return;
+		}
+		//Push to output array: everything on input line and everything on matching line in account info file
+		combinedArray.push({
+			...inputLine,
+			...accountLine,
+		});
+	});
+
+	//Map output arrays to output object
+	const outputJSON: Array<ReactOutputRow> = combinedArray.map((line) => {
+		return {
+			Name: line.Name,
+			Account: line.Account,
+			Routing: line.Routing,
+			Type: line.Type,
+			Amount: line.Saldo,
+			selected: false
+		};
+	});
+
+	return {
+		outputJSON,
+		errors,
+	};
 }
 
 export default function OutputTable(props: OutputTableProps) {
@@ -35,7 +91,7 @@ export default function OutputTable(props: OutputTableProps) {
 }
 
 const OutputTableContainer = styled.div`
-	max-height: 100vh;
+	max-height: calc(100vh - var(--tabs-height));
 	overflow: auto;
 	flex-grow: 1;
 

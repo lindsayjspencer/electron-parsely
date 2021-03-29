@@ -3,8 +3,9 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { AccountRow, InputRow, OutputRow } from "_/main/types";
-import OutputTable from "./OutputTable";
+import AccountsTable from "./AccountsTable";
 import RightNav from "./RightNav";
+import Tabs from "./Tabs";
 import WarningCard from "./WarningCard";
 
 export interface ReactInputRow extends InputRow {
@@ -19,65 +20,9 @@ export default function App() {
 	const [accountsData, setAccountsData] = useState<Array<AccountRow>>();
 	const [inputData, setInputData] = useState<Array<InputRow>>();
 	const [outputData, setOutputData] = useState<Array<ReactOutputRow>>();
-	const [errorOutputData, setErrorOutputData] = useState<
-		Array<ReactOutputRow>
-	>();
+	const [errorOutputData, setErrorOutputData] = useState<Array<ReactOutputRow>>();
+	const [activeTab, setActiveTab] = useState<string>("Accounts");
 	const [status, setStatus] = useState<string>("");
-
-	const parsely = (
-		accountsJSON: Array<AccountRow>,
-		inputJSON: Array<InputRow>
-	) => {
-		//New empty array for outputs
-		var combinedArray: Array<AccountRow & InputRow> = [];
-		var errors: any = [];
-
-		//Loop through lines of input
-		inputJSON.forEach((inputLine) => {
-			//Search for matching "Name", mark accountLine true if found
-			var accountLine = accountsJSON.find((x) => {
-				return (
-					x.Name === inputLine.NaamCrediteur ||
-					x.Code === inputLine.CodeCrediteur
-				);
-			});
-			//If no match
-			if (!accountLine) {
-				// console.log(`Account ${inputLine.NaamCrediteur} not found`);
-				errors.push({
-					Name: inputLine.NaamCrediteur,
-					Account: undefined,
-					Routing: undefined,
-					Type: undefined,
-					Amount: inputLine.Saldo,
-					selected: false
-				});
-				return;
-			}
-			//Push to output array: everything on input line and everything on matching line in account info file
-			combinedArray.push({
-				...inputLine,
-				...accountLine,
-			});
-		});
-
-		//Map output arrays to output object
-		const outputJSON: Array<ReactOutputRow> = combinedArray.map((line) => {
-			return {
-				Name: line.Name,
-				Account: line.Account,
-				Routing: line.Routing,
-				Type: line.Type,
-				Amount: line.Saldo,
-				selected: false
-			};
-		});
-
-		return {
-			outputJSON,
-			errors,
-		};
-	};
 
 	useEffect(() => {
 		ipcRenderer.send("onLoad");
@@ -92,19 +37,19 @@ export default function App() {
 		});
 	}, []);
 
-	useEffect(() => {
-		if (accountsData && inputData) {
-			const { outputJSON, errors } = parsely(accountsData, inputData);
-			if(outputJSON.length) {
-				setOutputData(outputJSON);
-			}
-			if(errors.length) {
-				setErrorOutputData(errors);
-			}
-		} else {
-			setOutputData(undefined);
-		}
-	}, [accountsData, inputData]);
+	// useEffect(() => {
+	// 	if (accountsData && inputData) {
+	// 		const { outputJSON, errors } = parsely(accountsData, inputData);
+	// 		if(outputJSON.length) {
+	// 			setOutputData(outputJSON);
+	// 		}
+	// 		if(errors.length) {
+	// 			setErrorOutputData(errors);
+	// 		}
+	// 	} else {
+	// 		setOutputData(undefined);
+	// 	}
+	// }, [accountsData, inputData]);
 
 	useEffect(() => {
 		ipcRenderer.send("newOutputData", outputData);
@@ -118,44 +63,56 @@ export default function App() {
 		ipcRenderer.send("requestInputFile");
 	};
 
-	const onRowClick = (outputLine: ReactOutputRow | ReactInputRow) => {};
-
 	let content = null;
-	if (accountsData === null) {
-		content = (
-			<WarningCard
-				text={"Please import an accounts file"}
-				onClick={requestAccountsFile}
-			/>
-		);
-	} else if (inputData === null) {
-		content = (
-			<WarningCard
-				text={"Please import an input file"}
-				onClick={requestInputFile}
-			/>
-		);
-	} else if (outputData !== null && outputData !== undefined) {
-		content = (
-			<OutputTable
-				outputData={outputData}
-				errorData={errorOutputData}
-				onRowClick={onRowClick}
-			/>
-		);
+	switch(activeTab) {
+		case "Accounts":
+			if (accountsData === null || accountsData === undefined) {
+				content = <WarningCard text={"Please import an accounts file"} onClick={requestAccountsFile} />;
+			} else {
+				content = <AccountsTable accountsData={accountsData} />;
+			}
+		break;
+		case "Input":
+			if (inputData === null || inputData === undefined) {
+				content = <WarningCard text={"Please import an input file"} onClick={requestInputFile} />;
+			}
+		break;
 	}
+
+	const tabs = [
+		{
+			label: "Accounts",
+			callback: () => setActiveTab("Accounts"),
+			icon: "\f19c",
+		},
+		{
+			label: "Input",
+			callback: () => setActiveTab("Input"),
+			icon: "\f382"
+		},
+	];
 
 	return (
 		<MainContainer>
-			{content}
+			<ContentContainer>
+				<Tabs tabs={tabs} activeTab={activeTab} />
+				{content}
+			</ContentContainer>
 			<RightNav status={status} />
 		</MainContainer>
 	);
 }
+
+const ContentContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+`;
 
 const MainContainer = styled.div`
 	display: flex;
 	flex-direction: row;
 	height: 100vh;
 	overflow: hidden;
+	--tabs-height: 36px;
 `;

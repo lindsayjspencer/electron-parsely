@@ -4,6 +4,10 @@
     --#{$color}: #{$value};
   }
 
+  @each $color, $value in $grays-map {
+    --#{$color}: #{$value};
+  }
+
   @each $color, $value in $theme-colors {
     --#{$color}: #{$value};
   }

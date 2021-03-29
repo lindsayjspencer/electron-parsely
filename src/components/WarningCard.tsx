@@ -16,5 +16,5 @@ export default function WarningCard(props: WarningCardProps) {
 }
 
 const Card = styled.div`
-	margin-top: auto;
+	margin: auto;
 `;
