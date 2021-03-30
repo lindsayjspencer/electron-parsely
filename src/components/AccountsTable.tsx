@@ -144,11 +144,11 @@ const SelectedRowPanel = (props: SelectedRowPanelProps) => {
 		content = <>
 			<h4 className="mx-3">Selected row</h4>
 			<InputsContainer>
-				<Input key={uuid()} onChange={(value: string) => { newAccount.Name = value; props.updateAccount(newAccount); }} label="Company name" value={props.accountLine.Name} />
-				<Input key={uuid()} onChange={(value: string) => { newAccount.Account = value; props.updateAccount(newAccount); }} label="Account number" value={props.accountLine.Account} />
-				<Input key={uuid()} onChange={(value: string) => { newAccount.Routing = value; props.updateAccount(newAccount); }} label="Routing number" value={props.accountLine.Routing} />
-				<Input key={uuid()} onChange={(value: string) => { newAccount.Code = value; props.updateAccount(newAccount); }} label="Code" value={props.accountLine.Code} />
-				<Input key={uuid()} onChange={(value: string) => { newAccount.Type = value; props.updateAccount(newAccount); }} label="Account type" value={props.accountLine.Type} />
+				<Input key={uuid()} onBlur={(value: string) => { newAccount.Name = value; props.updateAccount(newAccount); }} label="Company name" value={props.accountLine.Name} />
+				<Input key={uuid()} onBlur={(value: string) => { newAccount.Account = value; props.updateAccount(newAccount); }} label="Account number" value={props.accountLine.Account} />
+				<Input key={uuid()} onBlur={(value: string) => { newAccount.Routing = value; props.updateAccount(newAccount); }} label="Routing number" value={props.accountLine.Routing} />
+				<Input key={uuid()} onBlur={(value: string) => { newAccount.Code = value; props.updateAccount(newAccount); }} label="Code" value={props.accountLine.Code} />
+				<Input key={uuid()} onBlur={(value: string) => { newAccount.Type = value; props.updateAccount(newAccount); }} label="Account type" value={props.accountLine.Type} />
 			</InputsContainer>
 		</>
 	}

@@ -8,7 +8,8 @@ interface InputProps {
 	id?: string;
 	comment?: string;
 	value: string;
-	onChange: (val: string) => void;
+	onChange?: (val: string) => void;
+	onBlur?: (val: string) => void;
 }
 
 export default function Input(props: InputProps) {
@@ -18,7 +19,12 @@ export default function Input(props: InputProps) {
 	const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const newValue = event.currentTarget.value;
 		setValue(newValue);
-		props.onChange(newValue);
+		props.onChange?.(newValue);
+	}
+
+	const onBlur = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const newValue = event.currentTarget.value;
+		props.onBlur?.(newValue);
 	}
 
 	useEffect(() => {
@@ -30,7 +36,7 @@ export default function Input(props: InputProps) {
 	return (
 		<div className="form-group">
 			{props.label && <label htmlFor={id}>{props.label}</label>}
-			<input onChange={onChange} value={value} type="text" className="form-control" id={id} aria-describedby="emailHelp" placeholder="Enter email" />
+			<input onBlur={onBlur} onChange={onChange} value={value} type="text" className="form-control" id={id} aria-describedby="emailHelp" placeholder="Enter email" />
 			{props.comment && <small id={`${id}Help`} className="form-text text-muted">{props.comment}</small>}
 		</div>
 	);
