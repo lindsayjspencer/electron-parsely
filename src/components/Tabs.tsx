@@ -14,11 +14,11 @@ interface TabsProps {
 
 export default function Tabs(props: TabsProps) {
 	return (
-			<StyledTabContainer>
-				{props.tabs.map(tab => {
-					return <StyledTab onClick={tab.callback} selected={tab.label === props.activeTab} icon={tab.icon}>{tab.label}</StyledTab>
-				})}
-			</StyledTabContainer>
+		<StyledTabContainer>
+			{props.tabs.map((tab, i) => {
+				return <StyledTab key={i} onClick={tab.callback} selected={tab.label === props.activeTab} icon={tab.icon}>{tab.label}</StyledTab>
+			})}
+		</StyledTabContainer>
 	)
 }
 
@@ -30,7 +30,7 @@ interface StyledTabProps {
 
 const StyledTab = styled.div<StyledTabProps>`
 
-	background: var(--gray-200);
+	background: var(--gray-100);
 	color: black;
 	padding: 8px 16px;
 	font-size: 14px;
@@ -39,7 +39,7 @@ const StyledTab = styled.div<StyledTabProps>`
 
 	&:hover {
 		cursor: pointer;
-		background: var(--gray-100);
+		background: var(--gray-200);
 	}
 
 	&:before {
@@ -69,12 +69,5 @@ const StyledTabContainer = styled.div`
 	flex-direction: row;
 	width: 100%;
 	height: var(--tabs-height);
-
-	-webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    cursor: default;
 
 `;

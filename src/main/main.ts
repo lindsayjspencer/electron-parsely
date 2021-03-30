@@ -6,8 +6,9 @@ import { app, BrowserWindow, dialog, ipcMain, Menu } from "electron";
 import xlsx from 'node-xlsx';
 import * as path from "path";
 import * as url from "url";
+import { v4 as uuid } from 'uuid';
 import Store from "./Store";
-import { AccountRow, InputRow, OutputRow } from "./types";
+import { ImportedAccountRow, InputRow, OutputRow } from "./types";
 
 const parsely = require("./parsely");
 const jsonexport = require("jsonexport");
@@ -17,7 +18,7 @@ const fs = require("fs");
 
 let outputData: OutputRow[] | null;
 
-const setAccounts = (data: AccountRow[] | null) => {
+const setAccounts = (data: ImportedAccountRow[] | null) => {
 	store.set("accounts", data);
 	mainWindow?.webContents.send("accountsData", data);
 }
@@ -124,6 +125,12 @@ function createWindow(): void {
 					click() {
 						mainWindow?.webContents.openDevTools();
 					}
+				},
+				{
+					label: "Reload",
+					click() {
+						mainWindow?.reload();
+					}
 				}
 			],
 		},
@@ -192,6 +199,17 @@ ipcMain.on("requestInputFile", async (event, arg) => {
 	getInputJSON();
 });
 
+ipcMain.on("saveAccountsFile", async (event, arg) => {
+	saveAccountsFile();
+});
+
+ipcMain.on("setAccountsData", async (event, arg) => {
+	setAccounts(arg);
+});
+// ipcMain.on("requestInputFile", async (event, arg) => {
+// 	getInputJSON();
+// });
+
 const sendStatus = (status: string) => {
 	mainWindow?.webContents.send("status", status);
 }
@@ -250,7 +268,14 @@ const getAccountsJSON = async () => {
 
 		if (!Array.isArray(accountsJSON)) return;
 
-		setAccounts(accountsJSON);
+		const formattedAccountsJSON = accountsJSON.map((row) => {
+			return {
+				...row,
+				uuid: uuid()
+			}
+		})
+
+		setAccounts(formattedAccountsJSON);
 		
 		sendStatus("Accounts file selected");		
 
@@ -293,6 +318,42 @@ const writeOutput = async () => {
 					return;
 				}
 				sendStatus("Output saved succesfully");			
+			});
+		});
+	});
+};
+
+const saveAccountsFile = async () => {
+	if (!mainWindow) return;
+
+	const accountsData = store.get("accounts") as ImportedAccountRow[];
+
+	if(!accountsData) {
+		sendStatus("No data to save");
+		return;
+	}
+
+	const formattedData = accountsData.map((line) => {
+		return {
+			Code: line.Code,
+			Name: line.Name,
+			Account: line.Account,
+			Routing: line.Routing,
+			Type: line.Type
+		}
+	});
+
+	dialog.showSaveDialog(mainWindow).then(async (res) => {
+		if (res.canceled) {
+			sendStatus("No file selected");
+			return;
+		}
+		jsonexport(formattedData, function (err: string, file: string) {
+			fs.writeFile(res.filePath, file, function (err: string) {
+				if (err) {
+					return;
+				}
+				sendStatus("Accounts saved succesfully");			
 			});
 		});
 	});

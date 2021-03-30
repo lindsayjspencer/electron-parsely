@@ -1,8 +1,8 @@
-import { ipcRenderer } from "electron";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { AccountRow, InputRow, OutputRow } from "_/main/types";
+import { ImportedAccountRow, InputRow, OutputRow } from "_/main/types";
+import ipcComm from '../models/IpcComm';
 import AccountsTable from "./AccountsTable";
 import RightNav from "./RightNav";
 import Tabs from "./Tabs";
@@ -17,64 +17,33 @@ export interface ReactOutputRow extends OutputRow {
 }
 
 export default function App() {
-	const [accountsData, setAccountsData] = useState<Array<AccountRow>>();
+	const [accountsData, setAccountsData] = useState<Array<ImportedAccountRow>>();
 	const [inputData, setInputData] = useState<Array<InputRow>>();
-	const [outputData, setOutputData] = useState<Array<ReactOutputRow>>();
-	const [errorOutputData, setErrorOutputData] = useState<Array<ReactOutputRow>>();
 	const [activeTab, setActiveTab] = useState<string>("Accounts");
+	const [rightNavContent, setRightNavContent] = useState<JSX.Element | null>(null);
 	const [status, setStatus] = useState<string>("");
 
+	const Ipc = ipcComm.getInstance();
+
 	useEffect(() => {
-		ipcRenderer.send("onLoad");
-		ipcRenderer.on("accountsData", (event, data) => {
-			setAccountsData(data);
-		});
-		ipcRenderer.on("inputData", (event, data) => {
-			setInputData(data);
-		});
-		ipcRenderer.on("status", (event, data) => {
-			setStatus(data);
-		});
+		Ipc.onLoad();
+		Ipc.addEventListener("accountsData", setAccountsData);
+		Ipc.addEventListener("inputData", setInputData);
+		Ipc.addEventListener("status", setStatus);
 	}, []);
-
-	// useEffect(() => {
-	// 	if (accountsData && inputData) {
-	// 		const { outputJSON, errors } = parsely(accountsData, inputData);
-	// 		if(outputJSON.length) {
-	// 			setOutputData(outputJSON);
-	// 		}
-	// 		if(errors.length) {
-	// 			setErrorOutputData(errors);
-	// 		}
-	// 	} else {
-	// 		setOutputData(undefined);
-	// 	}
-	// }, [accountsData, inputData]);
-
-	useEffect(() => {
-		ipcRenderer.send("newOutputData", outputData);
-	}, [outputData]);
-
-	const requestAccountsFile = () => {
-		ipcRenderer.send("requestAccountsFile");
-	};
-
-	const requestInputFile = () => {
-		ipcRenderer.send("requestInputFile");
-	};
 
 	let content = null;
 	switch(activeTab) {
 		case "Accounts":
 			if (accountsData === null || accountsData === undefined) {
-				content = <WarningCard text={"Please import an accounts file"} onClick={requestAccountsFile} />;
+				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} />;
 			} else {
-				content = <AccountsTable accountsData={accountsData} />;
+				content = <AccountsTable accountsData={accountsData} setRightNavContent={setRightNavContent} />;
 			}
 		break;
 		case "Input":
 			if (inputData === null || inputData === undefined) {
-				content = <WarningCard text={"Please import an input file"} onClick={requestInputFile} />;
+				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} />;
 			}
 		break;
 	}
@@ -98,7 +67,9 @@ export default function App() {
 				<Tabs tabs={tabs} activeTab={activeTab} />
 				{content}
 			</ContentContainer>
-			<RightNav status={status} />
+			<RightNav status={status}>
+				{rightNavContent}
+			</RightNav>
 		</MainContainer>
 	);
 }
@@ -115,4 +86,11 @@ const MainContainer = styled.div`
 	height: 100vh;
 	overflow: hidden;
 	--tabs-height: 36px;
+
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
 `;

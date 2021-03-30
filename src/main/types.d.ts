@@ -6,6 +6,10 @@ export interface AccountRow {
 	Type: string;
 }
 
+export interface ImportedAccountRow extends AccountRow {
+	uuid: string;
+}
+
 export interface InputRow {
 	NaamCrediteur: string;
 	CodeCrediteur: string;
