@@ -29,7 +29,7 @@ export const parsely = (accountsJSON: Array<ImportedAccountRow>, inputJSON: Arra
 	// 		Account: line.Account,
 	// 		Routing: line.Routing,
 	// 		Type: line.Type,
-	// 		Amount: line.Saldo,
+	// 		Amount: line.Betaalwarde,
 	// 		selected: false
 	// 	};
 	// });

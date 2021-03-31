@@ -39,14 +39,16 @@ export default function App() {
 	switch(activeTab) {
 		case "Accounts":
 			if (accountsData === null || accountsData === undefined) {
-				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} />;
+				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} setRightNavContent={setRightNavContent} />;
+				// setRightNavContent(null);
 			} else {
 				content = <AccountsTable accountsData={accountsData} setRightNavContent={setRightNavContent} />;
 			}
 		break;
 		case "Payments":
 			if (inputData === null || inputData === undefined) {
-				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} />;
+				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} setRightNavContent={setRightNavContent} />;
+				// setRightNavContent(null);
 			} else {
 				content = paymentRows ? <PaymentsTable paymentRows={paymentRows} setRightNavContent={setRightNavContent} /> : null;
 			}

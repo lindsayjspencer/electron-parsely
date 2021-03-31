@@ -111,7 +111,7 @@ interface TableRowProps {
 // 		Account: line.Account,
 // 		Routing: line.Routing,
 // 		Type: line.Type,
-// 		Amount: line.Saldo,
+// 		Amount: line.Betaalwarde,
 
 const TableRow = (props: TableRowProps) => {
 	let Name, Account, Routing, Type, Amount;
@@ -130,7 +130,7 @@ const TableRow = (props: TableRowProps) => {
 		Type = "--";
 	}
 	for (const input of props.paymentRow.inputRows) {
-		Amount += +input.Saldo;
+		Amount += +input.Betaalwarde;
 	}
 	return (
 		<StyledTableRow selected={props.selected} onClick={props.onClick}>
