@@ -1,5 +1,5 @@
 import { ipcRenderer } from "electron";
-import { ImportedAccountRow } from "_/main/types";
+import { ImportedAccountRow, PaymentRow } from "_/main/types";
 
 export default class IpcComm {
 
@@ -85,8 +85,8 @@ export default class IpcComm {
 		ipcRenderer.send("saveAccountsFile");
 	};
 
-	public savePaymentsFile = () => {
-		ipcRenderer.send("savePaymentsFile");
+	public savePaymentsFile = (data: PaymentRow[]) => {
+		ipcRenderer.send("savePaymentsFile", data);
 	};
 
 	public setAccountsData = (data: ImportedAccountRow[]) => {

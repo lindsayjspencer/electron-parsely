@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { formatCurrency } from '_/renderer/helpers';
 import { PaymentRow } from '../main/types';
 import ipcComm from '../models/IpcComm';
 
@@ -26,7 +27,7 @@ export default function PaymentsTable(props: PaymentsTableProps) {
 	}
 
 	useEffect(() => {
-		props.setRightNavContent(<SelectedRowPanel paymentRow={selectedRow} reset={() => setSelectedRow(undefined)} />);
+		props.setRightNavContent(<SelectedRowPanel paymentRow={selectedRow} reset={() => setSelectedRow(undefined)} paymentRows={props.paymentRows} />);
 	}, [selectedRow]);
 
 	return (
@@ -129,7 +130,7 @@ const TableRow = (props: TableRowProps) => {
 		Type = "--";
 	}
 	for (const input of props.paymentRow.inputRows) {
-		Amount += input.Saldo;
+		Amount += +input.Saldo;
 	}
 	return (
 		<StyledTableRow selected={props.selected} onClick={props.onClick}>
@@ -137,13 +138,14 @@ const TableRow = (props: TableRowProps) => {
 			<td>{Account}</td>
 			<td>{Routing}</td>
 			<td>{Type}</td>
-			<td>{Amount}</td>
+			<td className="text-right">{formatCurrency(Amount)}</td>
 		</StyledTableRow>
 	)
 }
 
 interface SelectedRowPanelProps {
 	paymentRow?: PaymentRow;
+	paymentRows: PaymentRow[];
 	reset: () => void;
 }
 
@@ -166,14 +168,14 @@ const SelectedRowPanel = (props: SelectedRowPanelProps) => {
 	}
 
 	const saveFile = () => {
-		Ipc.savePaymentsFile();
+		Ipc.savePaymentsFile(props.paymentRows);
 	}
 
 	return (
 		<PanelContainer className="py-3">
 			{content}
 			<button onClick={requestFile} className="btn btn-light mt-auto mb-1 mx-3">Import new file</button>
-			<button onClick={saveFile} className="btn btn-light mx-3">Export payments</button>
+			<button onClick={saveFile} className="btn btn-light mx-3">Save payment file</button>
 		</PanelContainer>
 	);
 }

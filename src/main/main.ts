@@ -7,8 +7,9 @@ import xlsx from 'node-xlsx';
 import * as path from "path";
 import * as url from "url";
 import { v4 as uuid } from 'uuid';
+import { formatCurrency } from "_/renderer/helpers";
 import Store from "./Store";
-import { ImportedAccountRow, InputRow, OutputRow } from "./types";
+import { ImportedAccountRow, InputRow, OutputRow, PaymentRow } from "./types";
 
 const jsonexport = require("jsonexport");
 const csv = require("csvtojson");
@@ -201,6 +202,10 @@ ipcMain.on("saveAccountsFile", async (event, arg) => {
 	saveAccountsFile();
 });
 
+ipcMain.on("savePaymentsFile", async (event, arg) => {
+	savePaymentsFile(arg);
+});
+
 ipcMain.on("setAccountsData", async (event, arg) => {
 	setAccounts(arg);
 });
@@ -359,6 +364,48 @@ const saveAccountsFile = async () => {
 					return;
 				}
 				sendStatus("Accounts saved succesfully");			
+			});
+		});
+	});
+};
+
+const savePaymentsFile = async (data: PaymentRow[]) => {
+	if (!mainWindow) return;
+
+	if(!data || data.length === 0) {
+		sendStatus("No data to save");
+		return;
+	}
+
+	const filteredData = data.filter((line) => line.account!==undefined);
+
+	const mappedData = filteredData.map((line) => {
+		let Amount = 0;
+		for (const input of line.inputRows) {
+			Amount += +input.Saldo+0.01;
+		}
+		const formattedAmount = formatCurrency(Amount).replaceAll(",", "");
+
+		return {
+			Name: line.account!.Name,
+			Account: line.account!.Account,
+			Routing: line.account!.Routing,
+			Type: line.account!.Type,
+			Amount: formattedAmount
+		}
+	});
+
+	dialog.showSaveDialog(mainWindow).then(async (res) => {
+		if (res.canceled) {
+			sendStatus("No file selected");
+			return;
+		}
+		jsonexport(mappedData, function (err: string, file: string) {
+			fs.writeFile(res.filePath, file, function (err: string) {
+				if (err) {
+					return;
+				}
+				sendStatus("Payments saved succesfully");			
 			});
 		});
 	});

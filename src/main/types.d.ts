@@ -13,7 +13,7 @@ export interface ImportedAccountRow extends AccountRow {
 export interface InputRow {
 	NaamCrediteur: string;
 	CodeCrediteur: string;
-	Saldo: number;
+	Saldo: number | string;
 }
 
 export interface ImportedInputRow extends InputRow {
