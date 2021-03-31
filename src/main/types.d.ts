@@ -1,4 +1,4 @@
-export interface AccountRow {
+export interface AccountRow extends Record<string, any> {
 	Name: string;
 	Code: string;
 	Account: string;
@@ -14,6 +14,16 @@ export interface InputRow {
 	NaamCrediteur: string;
 	CodeCrediteur: string;
 	Saldo: number;
+}
+
+export interface ImportedInputRow extends InputRow {
+	uuid: string;
+}
+
+export interface PaymentRow {
+	account: ImportedAccountRow | undefined;
+	inputRows: ImportedInputRow[];
+	uuid: string;
 }
 
 export interface OutputRow {

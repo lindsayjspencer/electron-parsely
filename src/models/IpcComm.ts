@@ -85,8 +85,8 @@ export default class IpcComm {
 		ipcRenderer.send("saveAccountsFile");
 	};
 
-	public saveInputFile = () => {
-		ipcRenderer.send("saveInputFile");
+	public savePaymentsFile = () => {
+		ipcRenderer.send("savePaymentsFile");
 	};
 
 	public setAccountsData = (data: ImportedAccountRow[]) => {

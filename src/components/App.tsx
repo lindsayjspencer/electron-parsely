@@ -1,24 +1,19 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { ImportedAccountRow, InputRow, OutputRow } from "_/main/types";
+import { ImportedAccountRow, ImportedInputRow, PaymentRow } from "_/main/types";
+import { parsely } from "_/renderer/parsely";
 import ipcComm from '../models/IpcComm';
 import AccountsTable from "./AccountsTable";
+import PaymentsTable from "./PaymentsTable";
 import RightNav from "./RightNav";
 import Tabs from "./Tabs";
 import WarningCard from "./WarningCard";
 
-export interface ReactInputRow extends InputRow {
-	selected: boolean;
-}
-
-export interface ReactOutputRow extends OutputRow {
-	selected: boolean;
-}
-
 export default function App() {
 	const [accountsData, setAccountsData] = useState<Array<ImportedAccountRow>>();
-	const [inputData, setInputData] = useState<Array<InputRow>>();
+	const [inputData, setInputData] = useState<Array<ImportedInputRow>>();
+	const [paymentRows, setPaymentRows] = useState<Array<PaymentRow>>();
 	const [activeTab, setActiveTab] = useState<string>("Accounts");
 	const [rightNavContent, setRightNavContent] = useState<JSX.Element | null>(null);
 	const [status, setStatus] = useState<string>("");
@@ -32,6 +27,14 @@ export default function App() {
 		Ipc.addEventListener("status", setStatus);
 	}, []);
 
+	useEffect(() => {
+		if(accountsData && inputData) {
+			setPaymentRows(parsely(accountsData, inputData));
+		} else {
+			setPaymentRows(undefined);
+		}
+	}, [inputData, accountsData]);
+
 	let content = null;
 	switch(activeTab) {
 		case "Accounts":
@@ -41,9 +44,11 @@ export default function App() {
 				content = <AccountsTable accountsData={accountsData} setRightNavContent={setRightNavContent} />;
 			}
 		break;
-		case "Input":
+		case "Payments":
 			if (inputData === null || inputData === undefined) {
 				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} />;
+			} else {
+				content = paymentRows ? <PaymentsTable paymentRows={paymentRows} setRightNavContent={setRightNavContent} /> : null;
 			}
 		break;
 	}
@@ -55,8 +60,8 @@ export default function App() {
 			icon: "\f19c",
 		},
 		{
-			label: "Input",
-			callback: () => setActiveTab("Input"),
+			label: "Payments",
+			callback: () => setActiveTab("Payments"),
 			icon: "\f382"
 		},
 	];

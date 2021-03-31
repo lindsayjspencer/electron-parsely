@@ -1,23 +1,21 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { v4 as uuid } from 'uuid';
-import { ImportedAccountRow } from '_/main/types';
+import { PaymentRow } from '../main/types';
 import ipcComm from '../models/IpcComm';
-import Input from './Input';
 
-interface AccountsTableProps {
-	accountsData: ImportedAccountRow[];
+interface PaymentsTableProps {
+	paymentRows: PaymentRow[];
 	setRightNavContent: (content: JSX.Element) => void;
 }
 
-export default function AccountsTable(props: AccountsTableProps) {
+export default function PaymentsTable(props: PaymentsTableProps) {
 
-	const [selectedRow, setSelectedRow] = useState<ImportedAccountRow>();
+	const [selectedRow, setSelectedRow] = useState<PaymentRow>();
 	
 	const Ipc = ipcComm.getInstance();
 
-	const onClick = (newSelection: ImportedAccountRow) => {
+	const onClick = (newSelection: PaymentRow) => {
 		setSelectedRow(current => {
 			if(current === newSelection) {
 				return undefined;
@@ -27,17 +25,8 @@ export default function AccountsTable(props: AccountsTableProps) {
 		});
 	}
 
-	const updateAccount = (newAccount: ImportedAccountRow) => {
-		const newAccounts = [...props.accountsData];
-		const index = newAccounts.findIndex(x=>x.uuid !== newAccount.uuid)
-		if(index !== -1) {
-			newAccounts[index-1] = newAccount;
-			Ipc.setAccountsData(newAccounts);
-		}
-	}
-
 	useEffect(() => {
-		props.setRightNavContent(<SelectedRowPanel accountLine={selectedRow} updateAccount={updateAccount} reset={() => setSelectedRow(undefined)} />);
+		props.setRightNavContent(<SelectedRowPanel paymentRow={selectedRow} reset={() => setSelectedRow(undefined)} />);
 	}, [selectedRow]);
 
 	return (
@@ -45,15 +34,15 @@ export default function AccountsTable(props: AccountsTableProps) {
 			<table className="table table-striped mb-0 table-sm table-borderless text-black-50">
 				<thead>
 					<tr>					
-						<th>Account</th>
-						<th>Code</th>
 						<th>Name</th>
+						<th>Account</th>
 						<th>Routing</th>
 						<th>Type</th>
+						<th>Amount</th>
 					</tr>					
 				</thead>
 				<tbody>
-					{props.accountsData.map((accountLine, i) => <TableRow onClick={() => onClick(accountLine)} selected={selectedRow === accountLine} key={accountLine.uuid} accountLine={accountLine} />)}
+					{props.paymentRows.map((paymentRow, i) => <TableRow onClick={() => onClick(paymentRow)} selected={selectedRow === paymentRow} key={paymentRow.uuid} paymentRow={paymentRow} />)}
 				</tbody>
 			</table>
 		</OutputTableContainer>
@@ -112,26 +101,49 @@ const StyledTableRow = styled.tr<StyledTableRowProps>`
 `;
 
 interface TableRowProps {
-	accountLine: ImportedAccountRow;
+	paymentRow: PaymentRow;
 	selected: boolean;
 	onClick: () => void;
 }
 
+// 		Name: line.Name,
+// 		Account: line.Account,
+// 		Routing: line.Routing,
+// 		Type: line.Type,
+// 		Amount: line.Saldo,
+
 const TableRow = (props: TableRowProps) => {
+	let Name, Account, Routing, Type, Amount;
+	Amount = 0;
+	if(props.paymentRow.account) {
+		// account attached
+		Name = props.paymentRow.account.Name;
+		Account = props.paymentRow.account.Account;
+		Routing = props.paymentRow.account.Routing;
+		Type = props.paymentRow.account.Type;
+	} else {
+		// no account
+		Name = props.paymentRow.inputRows[0].NaamCrediteur;
+		Account = "--";
+		Routing = "--";
+		Type = "--";
+	}
+	for (const input of props.paymentRow.inputRows) {
+		Amount += input.Saldo;
+	}
 	return (
 		<StyledTableRow selected={props.selected} onClick={props.onClick}>
-			<td>{props.accountLine.Account}</td>
-			<td>{props.accountLine.Code}</td>
-			<td>{props.accountLine.Name}</td>
-			<td>{props.accountLine.Routing}</td>
-			<td>{props.accountLine.Type}</td>
+			<td>{Name}</td>
+			<td>{Account}</td>
+			<td>{Routing}</td>
+			<td>{Type}</td>
+			<td>{Amount}</td>
 		</StyledTableRow>
 	)
 }
 
 interface SelectedRowPanelProps {
-	accountLine?: ImportedAccountRow;
-	updateAccount: (newAccount: ImportedAccountRow) => void;
+	paymentRow?: PaymentRow;
 	reset: () => void;
 }
 
@@ -140,40 +152,28 @@ const SelectedRowPanel = (props: SelectedRowPanelProps) => {
 	const Ipc = ipcComm.getInstance();
 	
 	let content = <div className="text-center">Nothing selected</div>;
-	if(props.accountLine) {
-		const newAccount = { ...props.accountLine };
-
-		const updateField = (field: string, newValue: string) => {
-			newAccount[field] = newValue;
-			props.updateAccount(newAccount);
-		}
+	if(props.paymentRow) {
+		const newAccount = { ...props.paymentRow };
 
 		content = <>
 			<h4 className="mx-3">Selected row</h4>
-			<InputsContainer>
-				<Input key={uuid()} onBlur={(value: string) => updateField("Name", value)} label="Company name" value={props.accountLine.Name} />
-				<Input key={uuid()} onBlur={(value: string) => updateField("Account", value)} label="Account number" value={props.accountLine.Account} />
-				<Input key={uuid()} onBlur={(value: string) => updateField("Routing", value)} label="Routing number" value={props.accountLine.Routing} />
-				<Input key={uuid()} onBlur={(value: string) => updateField("Code", value)} label="Code" value={props.accountLine.Code} />
-				<Input key={uuid()} onBlur={(value: string) => updateField("Type", value)} label="Account type" value={props.accountLine.Type} />
-			</InputsContainer>
 		</>
 	}
 
 	const requestFile = () => {
-		Ipc.requestAccountsFile();
+		Ipc.requestInputFile();
 		props.reset();
 	}
 
 	const saveFile = () => {
-		Ipc.saveAccountsFile();
+		Ipc.savePaymentsFile();
 	}
 
 	return (
 		<PanelContainer className="py-3">
 			{content}
 			<button onClick={requestFile} className="btn btn-light mt-auto mb-1 mx-3">Import new file</button>
-			<button onClick={saveFile} className="btn btn-light mx-3">Export accounts</button>
+			<button onClick={saveFile} className="btn btn-light mx-3">Export payments</button>
 		</PanelContainer>
 	);
 }

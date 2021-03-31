@@ -10,10 +10,8 @@ import { v4 as uuid } from 'uuid';
 import Store from "./Store";
 import { ImportedAccountRow, InputRow, OutputRow } from "./types";
 
-const parsely = require("./parsely");
 const jsonexport = require("jsonexport");
 const csv = require("csvtojson");
-const moment = require("moment");
 const fs = require("fs");
 
 let outputData: OutputRow[] | null;
@@ -81,13 +79,13 @@ function createWindow(): void {
 				{
 					label: "Import accounts file",
 					click() {
-						getAccountsJSON();
+						requestAccountsJSON();
 					},
 				},
 				{
 					label: "Import input file",
 					click() {
-						getInputJSON();
+						requestInputJSON();
 					},
 				},
 				{
@@ -193,10 +191,10 @@ ipcMain.on("newOutputData", async (event, arg) => {
 });
 
 ipcMain.on("requestAccountsFile", async (event, arg) => {
-	getAccountsJSON();
+	requestAccountsJSON();
 });
 ipcMain.on("requestInputFile", async (event, arg) => {
-	getInputJSON();
+	requestInputJSON();
 });
 
 ipcMain.on("saveAccountsFile", async (event, arg) => {
@@ -253,7 +251,7 @@ const loadFileSwitch = (filename: string) => {
 	}
 }
 
-const getAccountsJSON = async () => {
+const requestAccountsJSON = async () => {
 	if (!mainWindow) return;
 
 	dialog.showOpenDialog(mainWindow).then(async (res) => {
@@ -282,7 +280,7 @@ const getAccountsJSON = async () => {
 	});
 };
 
-const getInputJSON = async () => {
+const requestInputJSON = async () => {
 	if (!mainWindow) return;
 
 	dialog.showOpenDialog(mainWindow).then(async (res) => {
@@ -297,7 +295,14 @@ const getInputJSON = async () => {
 
 		if (!Array.isArray(inputJSON)) return;
 
-		setCurrentInput(inputJSON);
+		const formattedInputJSON = inputJSON.map((row) => {
+			return {
+				...row,
+				uuid: uuid()
+			}
+		})
+
+		setCurrentInput(formattedInputJSON);
 		
 		sendStatus("Input file selected");		
 
