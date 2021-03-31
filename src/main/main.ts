@@ -382,7 +382,7 @@ const savePaymentsFile = async (data: PaymentRow[]) => {
 	const mappedData = filteredData.map((line) => {
 		let Amount = 0;
 		for (const input of line.inputRows) {
-			Amount += +input.Saldo+0.01;
+			Amount += +input.Saldo;
 		}
 		const formattedAmount = formatCurrency(Amount).replaceAll(",", "");
 
