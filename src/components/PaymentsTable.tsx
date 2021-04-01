@@ -2,33 +2,57 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { formatCurrency } from '_/renderer/helpers';
-import { PaymentRow } from '../main/types';
+import { ImportedAccountRow, PaymentRow } from '../main/types';
 import ipcComm from '../models/IpcComm';
 
 interface PaymentsTableProps {
 	paymentRows: PaymentRow[];
 	setRightNavContent: (content: JSX.Element) => void;
+	accountsMap: Map<string, ImportedAccountRow>;
 }
 
 export default function PaymentsTable(props: PaymentsTableProps) {
 
-	const [selectedRow, setSelectedRow] = useState<PaymentRow>();
+	const [selectedRows, setSelectedRows] = useState<Set<PaymentRow>>(new Set());
+	const [formattedPaymentRows, setFormattedPaymentRows] = useState<PaymentRow[]>();
 	
 	const Ipc = ipcComm.getInstance();
 
 	const onClick = (newSelection: PaymentRow) => {
-		setSelectedRow(current => {
-			if(current === newSelection) {
-				return undefined;
-			} else {
-				return newSelection;
+		setSelectedRows(current => {
+			const currentSet = new Set(current);
+			if(current.size === 0) {
+				currentSet.add(newSelection);
+				return currentSet;
 			}
+			if(current.has(newSelection)) {
+				// deselect
+				currentSet.delete(newSelection);
+				return currentSet;
+			}
+			const accountUuid = current.values().next().value.accountUuid;
+			if(newSelection.accountUuid === accountUuid) {
+				currentSet.add(newSelection);
+				return currentSet;
+			}
+			const newSet: Set<PaymentRow> = new Set();
+			newSet.add(newSelection);
+			return newSet;
 		});
 	}
 
 	useEffect(() => {
-		props.setRightNavContent(<SelectedRowPanel paymentRow={selectedRow} reset={() => setSelectedRow(undefined)} paymentRows={props.paymentRows} />);
-	}, [selectedRow]);
+		props.setRightNavContent(<SelectedRowPanel selectedRows={selectedRows} reset={() => setSelectedRows(new Set())} paymentRows={formattedPaymentRows} />);
+	}, [selectedRows]);
+
+	useEffect(() => {
+		const rows: PaymentRow[] = [];
+		for(const row of props.paymentRows) {
+			row.account = row.accountUuid ? props.accountsMap.get(row.accountUuid) : undefined;
+			rows.push(row);
+		}
+		setFormattedPaymentRows(rows);
+	}, [props.accountsMap, props.paymentRows]);
 
 	return (
 		<OutputTableContainer>
@@ -43,7 +67,7 @@ export default function PaymentsTable(props: PaymentsTableProps) {
 					</tr>					
 				</thead>
 				<tbody>
-					{props.paymentRows.map((paymentRow, i) => <TableRow onClick={() => onClick(paymentRow)} selected={selectedRow === paymentRow} key={paymentRow.uuid} paymentRow={paymentRow} />)}
+					{formattedPaymentRows?.map((paymentRow, i) => <TableRow onClick={() => onClick(paymentRow)} selected={selectedRows.has(paymentRow)} key={paymentRow.uuid} paymentRow={paymentRow} />)}
 				</tbody>
 			</table>
 		</OutputTableContainer>
@@ -95,8 +119,8 @@ interface StyledTableRowProps {
 const StyledTableRow = styled.tr<StyledTableRowProps>`
 	&&& {
 		${props => props.selected ? `
-			outline: 2px solid var(--info);
 			color: black;
+			background: var(--gray-300);
 		` : ''}
 	}
 `;
@@ -106,12 +130,6 @@ interface TableRowProps {
 	selected: boolean;
 	onClick: () => void;
 }
-
-// 		Name: line.Name,
-// 		Account: line.Account,
-// 		Routing: line.Routing,
-// 		Type: line.Type,
-// 		Amount: line.Betaalwarde,
 
 const TableRow = (props: TableRowProps) => {
 	let Name, Account, Routing, Type, Amount;
@@ -130,7 +148,7 @@ const TableRow = (props: TableRowProps) => {
 		Type = "--";
 	}
 	for (const input of props.paymentRow.inputRows) {
-		Amount += +input.Betaalwarde;
+		Amount += +input.Betaalwaarde;
 	}
 	return (
 		<StyledTableRow selected={props.selected} onClick={props.onClick}>
@@ -144,8 +162,8 @@ const TableRow = (props: TableRowProps) => {
 }
 
 interface SelectedRowPanelProps {
-	paymentRow?: PaymentRow;
-	paymentRows: PaymentRow[];
+	selectedRows?: Set<PaymentRow>;
+	paymentRows?: PaymentRow[];
 	reset: () => void;
 }
 
@@ -154,11 +172,12 @@ const SelectedRowPanel = (props: SelectedRowPanelProps) => {
 	const Ipc = ipcComm.getInstance();
 	
 	let content = <div className="text-center">Nothing selected</div>;
-	if(props.paymentRow) {
-		const newAccount = { ...props.paymentRow };
-
+	if(props.selectedRows) {
 		content = <>
-			<h4 className="mx-3">Selected row</h4>
+			<h4 className="mx-3">Selected rows</h4>
+			{Array.from(props.selectedRows).map((row) => {
+				return <MutliselectRow paymentRow={row} key={row.uuid} />
+			})}
 		</>
 	}
 
@@ -168,7 +187,9 @@ const SelectedRowPanel = (props: SelectedRowPanelProps) => {
 	}
 
 	const saveFile = () => {
-		Ipc.savePaymentsFile(props.paymentRows);
+		if(props.paymentRows) {
+			Ipc.savePaymentsFile(props.paymentRows);
+		}
 	}
 
 	return (
@@ -191,4 +212,40 @@ const PanelContainer = styled.div`
 	flex-direction: column;
 	align-items: stretch;
 	height: 100vh;
+`;
+
+interface MultiselectionRowProps {
+	paymentRow: PaymentRow;
+}
+
+const MutliselectRow = (props: MultiselectionRowProps) => {
+	let Name, Amount;
+	Amount = 0;
+	if(props.paymentRow.account) {
+		// account attached
+		Name = props.paymentRow.account.Name;
+	} else {
+		// no account
+		Name = props.paymentRow.inputRows[0].NaamCrediteur;
+	}
+	for (const input of props.paymentRow.inputRows) {
+		Amount += +input.Betaalwaarde;
+	}
+	return (
+		<MultiselectRowContainer className={"mx-3"}>
+			<div className="name">{Name}</div>
+			<div className="ml-auto amount">{formatCurrency(Amount)}</div>
+		</MultiselectRowContainer>
+	);
+}
+
+const MultiselectRowContainer = styled.div`
+	display: flex;
+	align-items: center;
+	background: var(--gray-200);
+	color: black;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;;
+	margin-bottom: 0.5rem;
+	font-size: 10px;
 `;

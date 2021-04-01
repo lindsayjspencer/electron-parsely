@@ -12,6 +12,7 @@ import WarningCard from "./WarningCard";
 
 export default function App() {
 	const [accountsData, setAccountsData] = useState<Array<ImportedAccountRow>>();
+	const [accountsMap, setAccountsMap] = useState<Map<string, ImportedAccountRow>>();
 	const [inputData, setInputData] = useState<Array<ImportedInputRow>>();
 	const [paymentRows, setPaymentRows] = useState<Array<PaymentRow>>();
 	const [activeTab, setActiveTab] = useState<string>("Accounts");
@@ -33,14 +34,22 @@ export default function App() {
 		} else {
 			setPaymentRows(undefined);
 		}
-	}, [inputData, accountsData]);
+	}, [inputData]);
+
+	useEffect(() => {
+		if(!accountsData) return;
+		const accountsMap = new Map();
+		for (const line of accountsData) {
+			accountsMap.set(line.uuid, line);
+		}
+		setAccountsMap(accountsMap);
+	}, [accountsData]);
 
 	let content = null;
 	switch(activeTab) {
 		case "Accounts":
 			if (accountsData === null || accountsData === undefined) {
 				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} setRightNavContent={setRightNavContent} />;
-				// setRightNavContent(null);
 			} else {
 				content = <AccountsTable accountsData={accountsData} setRightNavContent={setRightNavContent} />;
 			}
@@ -48,9 +57,8 @@ export default function App() {
 		case "Payments":
 			if (inputData === null || inputData === undefined) {
 				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} setRightNavContent={setRightNavContent} />;
-				// setRightNavContent(null);
 			} else {
-				content = paymentRows ? <PaymentsTable paymentRows={paymentRows} setRightNavContent={setRightNavContent} /> : null;
+				content = paymentRows && accountsMap ? <PaymentsTable paymentRows={paymentRows} accountsMap={accountsMap} setRightNavContent={setRightNavContent} /> : null;
 			}
 		break;
 	}

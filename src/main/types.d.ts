@@ -13,7 +13,7 @@ export interface ImportedAccountRow extends AccountRow {
 export interface InputRow {
 	NaamCrediteur: string;
 	CodeCrediteur: string;
-	Betaalwarde: number | string;
+	Betaalwaarde: number | string;
 }
 
 export interface ImportedInputRow extends InputRow {
@@ -21,7 +21,8 @@ export interface ImportedInputRow extends InputRow {
 }
 
 export interface PaymentRow {
-	account: ImportedAccountRow | undefined;
+	accountUuid: string | undefined;
+	account?: ImportedAccountRow | undefined;
 	inputRows: ImportedInputRow[];
 	uuid: string;
 }

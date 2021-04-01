@@ -29,9 +29,9 @@ export default function AccountsTable(props: AccountsTableProps) {
 
 	const updateAccount = (newAccount: ImportedAccountRow) => {
 		const newAccounts = [...props.accountsData];
-		const index = newAccounts.findIndex(x=>x.uuid !== newAccount.uuid)
+		const index = newAccounts.findIndex(x=>x.uuid === newAccount.uuid)
 		if(index !== -1) {
-			newAccounts[index-1] = newAccount;
+			newAccounts[index] = newAccount;
 			Ipc.setAccountsData(newAccounts);
 		}
 	}
@@ -105,8 +105,8 @@ interface StyledTableRowProps {
 const StyledTableRow = styled.tr<StyledTableRowProps>`
 	&&& {
 		${props => props.selected ? `
-			outline: 2px solid var(--info);
 			color: black;
+			background: var(--gray-300);
 		` : ''}
 	}
 `;

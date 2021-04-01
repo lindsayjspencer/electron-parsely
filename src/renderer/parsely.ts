@@ -16,28 +16,11 @@ export const parsely = (accountsJSON: Array<ImportedAccountRow>, inputJSON: Arra
 		});
 		//Push to output array: everything on input line and everything on matching line in account info file
 		paymentArray.push({
-			account: accountLine,
+			accountUuid: accountLine?.uuid,
 			inputRows: [inputLine],
 			uuid: uuid()
 		});
 	});
-
-	// //Map output arrays to output object
-	// const outputJSON: Array<ReactOutputRow> = combinedArray.map((line) => {
-	// 	return {
-	// 		Name: line.Name,
-	// 		Account: line.Account,
-	// 		Routing: line.Routing,
-	// 		Type: line.Type,
-	// 		Amount: line.Betaalwarde,
-	// 		selected: false
-	// 	};
-	// });
-
-	// return {
-	// 	outputJSON,
-	// 	errors,
-	// };
 
 	return paymentArray;
 }
