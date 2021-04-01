@@ -172,12 +172,21 @@ const SelectedRowPanel = (props: SelectedRowPanelProps) => {
 	const Ipc = ipcComm.getInstance();
 	
 	let content = <div className="text-center">Nothing selected</div>;
-	if(props.selectedRows) {
+	if(props.selectedRows && props.selectedRows.size !== 0) {
+		let optionsButton;
+		if(props.selectedRows.values().next().value.account) {
+			// has account connected
+			optionsButton = props.selectedRows.size > 1 ? <button className="btn btn-primary mx-3 btn-sm">Merge payments</button> : null;
+		} else {
+			// no account match
+			optionsButton = <button className="btn btn-warning mx-3 btn-sm">Connect to account</button>;
+		}
 		content = <>
 			<h4 className="mx-3">Selected rows</h4>
 			{Array.from(props.selectedRows).map((row) => {
 				return <MutliselectRow paymentRow={row} key={row.uuid} />
 			})}
+			{optionsButton}
 		</>
 	}
 
