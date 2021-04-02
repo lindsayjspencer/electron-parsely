@@ -1,41 +1,40 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { v4 as uuid } from 'uuid';
 import { ImportedAccountRow, ImportedInputRow, PaymentRow } from "_/main/types";
-import { parsely } from "_/renderer/parsely";
 import ipcComm from '../models/IpcComm';
-import AccountsTable from "./AccountsTable";
-import PaymentsTable from "./PaymentsTable";
+import AccountsTable from "./Accounts/AccountsTable";
+import PaymentsTable from "./Payments/PaymentsTable";
 import RightNav from "./RightNav";
 import Tabs from "./Tabs";
 import WarningCard from "./WarningCard";
 
 export default function App() {
+
+	// Data
 	const [accountsData, setAccountsData] = useState<Array<ImportedAccountRow>>();
 	const [accountsMap, setAccountsMap] = useState<Map<string, ImportedAccountRow>>();
 	const [inputData, setInputData] = useState<Array<ImportedInputRow>>();
-	const [paymentRows, setPaymentRows] = useState<Array<PaymentRow>>();
+	const [paymentsData, setPaymentsData] = useState<Array<PaymentRow>>();
+
+	// App state
 	const [activeTab, setActiveTab] = useState<string>("Accounts");
 	const [rightNavContent, setRightNavContent] = useState<JSX.Element | null>(null);
 	const [status, setStatus] = useState<string>("");
 
+	// Communication
 	const Ipc = ipcComm.getInstance();
 
 	useEffect(() => {
 		Ipc.onLoad();
 		Ipc.addEventListener("accountsData", setAccountsData);
 		Ipc.addEventListener("inputData", setInputData);
+		Ipc.addEventListener("paymentsData", setPaymentsData);
 		Ipc.addEventListener("status", setStatus);
 	}, []);
 
-	useEffect(() => {
-		if(accountsData && inputData) {
-			setPaymentRows(parsely(accountsData, inputData));
-		} else {
-			setPaymentRows(undefined);
-		}
-	}, [inputData]);
-
+	// Update accounts map
 	useEffect(() => {
 		if(!accountsData) return;
 		const accountsMap = new Map();
@@ -45,24 +44,44 @@ export default function App() {
 		setAccountsMap(accountsMap);
 	}, [accountsData]);
 
-	let content = null;
-	switch(activeTab) {
-		case "Accounts":
-			if (accountsData === null || accountsData === undefined) {
-				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} setRightNavContent={setRightNavContent} />;
+	// Update payments
+	useEffect(() => {
+		if(!accountsData || !accountsMap || !inputData || !paymentsData) return;
+		const newPaymentsData = [...paymentsData];
+		for (const payment of newPaymentsData) {
+			if(payment.accountUuid) {
+				if(!accountsMap.get(payment.accountUuid)) {
+					payment.accountUuid = undefined;
+					payment.account = undefined;
+					while(payment.inputRows.length > 1) {
+						const input = payment.inputRows.pop();
+						if(input) {
+							newPaymentsData.push({
+								account: undefined,
+								accountUuid: undefined,
+								inputRows: [input],
+								uuid: uuid()
+							});
+						}
+					}
+				}
 			} else {
-				content = <AccountsTable accountsData={accountsData} setRightNavContent={setRightNavContent} />;
+				var accountLine = accountsData.find((x) => {
+					return (
+						x.Name === payment.inputRows[0].NaamCrediteur ||
+						x.Code === payment.inputRows[0].CodeCrediteur
+					);
+				});
+				if(accountLine) {
+					payment.accountUuid = accountLine.uuid;
+				}
 			}
-		break;
-		case "Payments":
-			if (inputData === null || inputData === undefined) {
-				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} setRightNavContent={setRightNavContent} />;
-			} else {
-				content = paymentRows && accountsMap ? <PaymentsTable paymentRows={paymentRows} accountsMap={accountsMap} setRightNavContent={setRightNavContent} /> : null;
-			}
-		break;
-	}
+		}
+		Ipc.setPaymentsData(newPaymentsData);
+		setPaymentsData(newPaymentsData);
+	}, [accountsMap]);
 
+	// Tabs
 	const tabs = [
 		{
 			label: "Accounts",
@@ -75,6 +94,24 @@ export default function App() {
 			icon: "\f382"
 		},
 	];
+	
+	let content = null;
+	switch(activeTab) {
+		case "Accounts":
+			if (accountsData === null || accountsData === undefined) {
+				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} setRightNavContent={setRightNavContent} />;
+			} else {
+				content = <AccountsTable accountsData={[...accountsData].sort((x, y) => x.Name.localeCompare(y.Name))} setRightNavContent={setRightNavContent} setAccountsData={setAccountsData} />;
+			}
+		break;
+		case "Payments":
+			if (inputData === null || inputData === undefined) {
+				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} setRightNavContent={setRightNavContent} />;
+			} else {
+				content = paymentsData && accountsMap ? <PaymentsTable paymentRows={paymentsData} accountsMap={accountsMap} setPaymentsData={setPaymentsData} setRightNavContent={setRightNavContent} /> : null;
+			}
+		break;
+	}
 
 	return (
 		<MainContainer>

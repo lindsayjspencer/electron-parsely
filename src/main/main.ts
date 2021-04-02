@@ -8,32 +8,52 @@ import * as path from "path";
 import * as url from "url";
 import { v4 as uuid } from 'uuid';
 import { formatCurrency } from "_/renderer/helpers";
+import { parsely } from "_/renderer/parsely";
 import Store from "./Store";
-import { ImportedAccountRow, InputRow, OutputRow, PaymentRow } from "./types";
+import { ImportedAccountRow, ImportedInputRow, PaymentRow } from "./types";
 
 const jsonexport = require("jsonexport");
 const csv = require("csvtojson");
 const fs = require("fs");
 
-let outputData: OutputRow[] | null;
-
 const setAccounts = (data: ImportedAccountRow[] | null) => {
-	store.set("accounts", data);
-	mainWindow?.webContents.send("accountsData", data);
+	store.set("accountsData", data);
 }
 
-const setCurrentInput = (data: InputRow[] | null) => {
-	store.set("currentInput", data);
-	mainWindow?.webContents.send("inputData", data);
+const setInputData = (data: ImportedInputRow[] | null) => {
+	store.set("inputData", data);
 }
 
-const setOutputData = (data: OutputRow[] | null) => {
-	outputData = data;
+const setPayments = (data: PaymentRow[] | null) => {
+	store.set("paymentsData", data);
+}
+
+const checkDataAndAggregate = () => {
+	const inputData = store.get("inputData");
+	const accountsData = store.get("accountsData");
+	if(accountsData && inputData) {
+		const paymentsData = parsely(accountsData, inputData);
+		setPayments(paymentsData);
+		mainWindow?.webContents.send("paymentsData", paymentsData);
+	}
 }
 
 const loadStoreData = () => {
-	setAccounts(store.get("accounts"));
-	setCurrentInput(store.get("currentInput"));
+
+	const accountsData = store.get("accountsData");
+	const inputData = store.get("inputData");
+	let paymentsData = store.get("paymentsData");
+
+	if(accountsData && inputData && !paymentsData) {
+		//do parsely
+		paymentsData = parsely(accountsData, inputData);
+		setPayments(paymentsData);
+	}
+	
+	mainWindow?.webContents.send("accountsData", accountsData);
+	mainWindow?.webContents.send("inputData", inputData);
+	mainWindow?.webContents.send("paymentsData", paymentsData);
+	
 }
 
 let mainWindow: Electron.BrowserWindow | null;
@@ -89,12 +109,6 @@ function createWindow(): void {
 						requestInputJSON();
 					},
 				},
-				{
-					label: "Save output",
-					click() {
-						writeOutput();
-					},
-				},
 				{ type: 'separator'},
 				{
 					label: "Quit",
@@ -117,6 +131,12 @@ function createWindow(): void {
 					label: "Reset input file",
 					click() {
 						resetInputFile();
+					},
+				},
+				{
+					label: "Reset payment data",
+					click() {
+						resetPaymentData();
 					},
 				},
 				{
@@ -166,52 +186,63 @@ app.on("activate", () => {
 const store = new Store({
 	configName: "accounts-data",
 	defaults: {
-		accounts: null,
-		currentInput: null,
+		accountsData: null,
+		inputData: null,
+		paymentsData: null,
 	},
 });
 
 const resetAccountsFile = () => {
-	store.set("accounts", null);
+	store.set("accountsData", null);
 	mainWindow?.webContents.send("accountsData", null);
 };
 
 const resetInputFile = () => {
-	store.set("currentInput", null);
+	store.set("inputData", null);
 	mainWindow?.webContents.send("inputData", null);
+};
+
+const resetPaymentData = () => {
+	store.set("paymentsData", null);
+	mainWindow?.webContents.send("paymentsData", null);
 };
 
 const acceptedExtensions = ["csv", "xls", "xlsx", "txt"];
 
-// Get state
+// Load store data
 ipcMain.on("onLoad", async (event, arg) => {
 	loadStoreData();
 });
-ipcMain.on("newOutputData", async (event, arg) => {
-	setOutputData(arg);
-});
 
+// Request new accounts file
 ipcMain.on("requestAccountsFile", async (event, arg) => {
 	requestAccountsJSON();
 });
+
+// Request new inputs file
 ipcMain.on("requestInputFile", async (event, arg) => {
 	requestInputJSON();
 });
 
+// Save accounts file
 ipcMain.on("saveAccountsFile", async (event, arg) => {
 	saveAccountsFile();
 });
 
+// Save payments file
 ipcMain.on("savePaymentsFile", async (event, arg) => {
 	savePaymentsFile(arg);
 });
 
+// Set accounts data
 ipcMain.on("setAccountsData", async (event, arg) => {
 	setAccounts(arg);
 });
-// ipcMain.on("requestInputFile", async (event, arg) => {
-// 	getInputJSON();
-// });
+
+// Set payments data
+ipcMain.on("setPaymentsData", async (event, arg) => {
+	setPayments(arg);
+});
 
 const sendStatus = (status: string) => {
 	mainWindow?.webContents.send("status", status);
@@ -279,6 +310,10 @@ const requestAccountsJSON = async () => {
 		})
 
 		setAccounts(formattedAccountsJSON);
+
+		mainWindow?.webContents.send("accountsData", store.get("accountsData"));
+		
+		checkDataAndAggregate();
 		
 		sendStatus("Accounts file selected");		
 
@@ -307,29 +342,14 @@ const requestInputJSON = async () => {
 			}
 		})
 
-		setCurrentInput(formattedInputJSON);
+		setInputData(formattedInputJSON);
+
+		mainWindow?.webContents.send("inputData", store.get("inputData"));
+
+		checkDataAndAggregate();
 		
 		sendStatus("Input file selected");		
 
-	});
-};
-
-const writeOutput = async () => {
-	if (!mainWindow || !outputData) return;
-
-	dialog.showSaveDialog(mainWindow).then(async (res) => {
-		if (res.canceled) {
-			sendStatus("No file selected");
-			return;
-		}
-		jsonexport(outputData, function (err: string, file: string) {
-			fs.writeFile(res.filePath, file, function (err: string) {
-				if (err) {
-					return;
-				}
-				sendStatus("Output saved succesfully");			
-			});
-		});
 	});
 };
 

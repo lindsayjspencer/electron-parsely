@@ -41,6 +41,7 @@ export interface StoreOptions {
 }
 
 export interface StoreDefaults {
-	accounts: Array<AccountRow> | null;
-	currentInput: Array<InputRow> | null;
+	accountsData: Array<AccountRow> | null;
+	inputData: Array<InputRow> | null;
+	paymentsData: Array<PaymentRow> | null;
 }

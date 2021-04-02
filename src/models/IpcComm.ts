@@ -1,20 +1,27 @@
 import { ipcRenderer } from "electron";
 import { ImportedAccountRow, PaymentRow } from "_/main/types";
 
+const IpcEvents: string[] = [
+	"accountsData",
+	"inputData",
+	"paymentsData",
+	"status"
+]
+
 export default class IpcComm {
 
 	private static instance: IpcComm;
+	private static events: string[];
 
 	private callbacks: {
 		[key: string]: Array<(data: any) => void>;
 	}
 
 	private constructor() {
-		this.callbacks = {
-			"accountsData": [],
-			"inputData": [],
-			"status": [],
-		};
+		this.callbacks = {};
+		for(const event of IpcEvents) {
+			this.callbacks[event] = [];
+		}
 		this.setupListeners();
 	}
 
@@ -32,15 +39,11 @@ export default class IpcComm {
 
 	private setupListeners = () => {
 
-		ipcRenderer.on("accountsData", (event, data) => {
-			this.onNewAccountsData(data);
-		});
-		ipcRenderer.on("inputData", (event, data) => {
-			this.onNewInputData(data);
-		});
-		ipcRenderer.on("status", (event, data) => {
-			this.onNewStatus(data);
-		});
+		for (const event of IpcEvents) {
+			ipcRenderer.on(event, (e, data) => {
+				this.onEventTrigger(event, data);
+			});
+		}
 
 	}
 
@@ -55,20 +58,8 @@ export default class IpcComm {
 		}
 	}
 
-	private onNewAccountsData = (data: any) => {
-		for (const callback of this.callbacks["accountsData"]) {
-			callback(data);
-		}
-	}
-
-	private onNewInputData = (data: any) => {
-		for (const callback of this.callbacks["inputData"]) {
-			callback(data);
-		}
-	}
-
-	private onNewStatus = (data: any) => {
-		for (const callback of this.callbacks["status"]) {
+	private onEventTrigger = (event: string, data: any) => {
+		for (const callback of this.callbacks[event]) {
 			callback(data);
 		}
 	}
@@ -91,6 +82,10 @@ export default class IpcComm {
 
 	public setAccountsData = (data: ImportedAccountRow[]) => {
 		ipcRenderer.send("setAccountsData", data);
+	};
+
+	public setPaymentsData = (data: PaymentRow[]) => {
+		ipcRenderer.send("setPaymentsData", data);
 	};
 
 }

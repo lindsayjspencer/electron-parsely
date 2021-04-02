@@ -32,11 +32,12 @@ export default function Input(props: InputProps) {
 	}, []);
 
 	const id = props.id ? props.id : uuid();
+	const placeholder = props.placeholder ? props.placeholder : props.label;
 
 	return (
 		<div className="form-group">
 			{props.label && <label htmlFor={id}>{props.label}</label>}
-			<input onBlur={onBlur} onChange={onChange} value={value} type="text" className="form-control" id={id} aria-describedby="emailHelp" placeholder="Enter email" />
+			<input onBlur={onBlur} onChange={onChange} value={value} type="text" className="form-control" id={id} aria-describedby="emailHelp" placeholder={placeholder} />
 			{props.comment && <small id={`${id}Help`} className="form-text text-muted">{props.comment}</small>}
 		</div>
 	);
