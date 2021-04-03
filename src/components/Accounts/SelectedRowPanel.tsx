@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import styled from 'styled-components';
 import { v4 as uuid } from 'uuid';
 import { ImportedAccountRow } from '_/main/types';
@@ -11,34 +11,22 @@ interface SelectedRowPanelProps {
 	updateAccount: (newAccount: ImportedAccountRow) => void;
 	deleteAccount: (uuid: string) => void;
 	reset: () => void;
+	mode: string;
+	setMode: (mode: string) => void;
 }
 
 export default function SelectedRowPanel(props: SelectedRowPanelProps) {
-
-	const [mode, setMode] = useState<string>("normal");
 	
 	const Ipc = ipcComm.getInstance();
 
 	useEffect(() => {
-		setMode("normal");
+		if(props.accountLine) {
+			props.setMode("normal");
+		}
 	}, [props.accountLine]);
 
-	const requestFile = () => {
-		Ipc.requestAccountsFile();
-		props.reset();
-	}
-
-	const saveFile = () => {
-		Ipc.saveAccountsFile();
-	}
-
-	const addNewAccount = () => {
-		setMode("add");
-	}
-
-
 	let content = <div className="text-center">Nothing selected</div>;
-	switch(mode) {
+	switch(props.mode) {
 		case "normal":
 			if(props.accountLine) {
 				const newAccount = { ...props.accountLine };
@@ -102,9 +90,6 @@ export default function SelectedRowPanel(props: SelectedRowPanelProps) {
 	return (
 		<PanelContainer className="py-3">
 			{content}
-			<button onClick={addNewAccount} className="btn btn-light mt-auto mb-1 mx-3">Add new account</button>
-			<button onClick={requestFile} className="btn btn-light mb-1 mx-3">Import new file</button>
-			<button onClick={saveFile} className="btn btn-light mx-3">Export accounts</button>
 		</PanelContainer>
 	);
 }

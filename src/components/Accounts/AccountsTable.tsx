@@ -10,11 +10,13 @@ interface AccountsTableProps {
 	accountsData: ImportedAccountRow[];
 	setRightNavContent: (content: JSX.Element) => void;
 	setAccountsData: (data: ImportedAccountRow[]) => void;
+	setTabOptions: (options: JSX.Element) => void;
 }
 
 export default function AccountsTable(props: AccountsTableProps) {
 
 	const [selectedRow, setSelectedRow] = useState<ImportedAccountRow>();
+	const [mode, setMode] = useState<string>("normal");
 	
 	const Ipc = ipcComm.getInstance();
 
@@ -51,8 +53,34 @@ export default function AccountsTable(props: AccountsTableProps) {
 	}
 
 	useEffect(() => {
-		props.setRightNavContent(<SelectedRowPanel accountLine={selectedRow} deleteAccount={deleteAccount} updateAccount={updateAccount} reset={() => setSelectedRow(undefined)} />);
-	}, [selectedRow]);
+		props.setRightNavContent(<SelectedRowPanel mode={mode} setMode={setMode} accountLine={selectedRow} deleteAccount={deleteAccount} updateAccount={updateAccount} reset={() => setSelectedRow(undefined)} />);
+	}, [selectedRow, mode]);
+
+	useEffect(() => {
+
+		const requestFile = () => {
+			Ipc.requestAccountsFile();
+			setSelectedRow(undefined);
+		}
+	
+		const saveFile = () => {
+			Ipc.saveAccountsFile();
+		}
+	
+		const addNewAccount = () => {
+			setMode("add");
+			setSelectedRow(undefined);
+		}
+
+		const tabOptions = (<>
+			<button onClick={addNewAccount} className="rounded-0 btn btn-light ml-auto">Add new account</button>
+			<button onClick={requestFile} className="rounded-0 btn btn-light">Import new file</button>
+			<button onClick={saveFile} className="rounded-0 btn btn-light">Export accounts</button>
+		</>);
+
+		props.setTabOptions(tabOptions);
+		
+	}, [])
 
 	return (
 		<AccountsTableContainer>

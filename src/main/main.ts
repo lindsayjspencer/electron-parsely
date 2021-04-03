@@ -61,6 +61,7 @@ let mainWindow: Electron.BrowserWindow | null;
 function createWindow(): void {
 	// Create the browser window.
 	mainWindow = new BrowserWindow({
+		show: false,
 		height: 800,
 		width: 1200,
 		webPreferences: {
@@ -83,6 +84,11 @@ function createWindow(): void {
 		)
 		.finally(() => {
 			/* no action */
+			mainWindow?.maximize();
+			mainWindow?.show();
+			if(process.env.NODE_ENV !== "production") {
+				mainWindow?.webContents.openDevTools();
+			}
 		});
 
 	// Emitted when the window is closed.

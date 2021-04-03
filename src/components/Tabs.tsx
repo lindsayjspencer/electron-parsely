@@ -1,6 +1,5 @@
 import * as React from 'react';
 import styled from 'styled-components';
-
 export interface TabData {
 	label: string;
 	callback: () => void;
@@ -10,14 +9,17 @@ export interface TabData {
 interface TabsProps {
 	tabs: TabData[];
 	activeTab: string;
+	tabOptions?: JSX.Element | null;
 }
 
 export default function Tabs(props: TabsProps) {
+
 	return (
 		<StyledTabContainer>
 			{props.tabs.map((tab, i) => {
 				return <StyledTab key={i} onClick={tab.callback} selected={tab.label === props.activeTab} icon={tab.icon}>{tab.label}</StyledTab>
 			})}
+			{props.tabOptions ? props.tabOptions : null}
 		</StyledTabContainer>
 	)
 }

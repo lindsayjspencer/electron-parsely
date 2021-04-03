@@ -17,24 +17,37 @@ export default function MutliselectRow(props: MultiselectionRowProps) {
 		// no account
 		Name = props.paymentRow.inputRows[0].NaamCrediteur;
 	}
-	for (const input of props.paymentRow.inputRows) {
-		Amount += +input.Betaalwaarde;
-	}
 	return (
-		<MultiselectRowContainer className={"mx-3"}>
+		<MultiselectRowContainer>
 			<div className="name">{Name}</div>
-			<div className="ml-auto amount">{formatCurrency(Amount)}</div>
+			<AmountContainer>
+				{props.paymentRow.inputRows.map(row => <div key={row.uuid} className="amount">{formatCurrency(+row.Betaalwaarde)}</div>)}
+			</AmountContainer>
 		</MultiselectRowContainer>
 	);
 }
 
-const MultiselectRowContainer = styled.div`
+const AmountContainer = styled.div`
 	display: flex;
-	align-items: center;
-	background: var(--gray-200);
+	flex-direction: column;
+	align-items: flex-end;
+	background: var(--gray-100);
 	color: black;
 	border-radius: 8px;
 	padding: 0.5rem 1rem;;
 	margin-bottom: 0.5rem;
 	font-size: 10px;
+`;
+
+const MultiselectRowContainer = styled.div`
+	display: flex;
+	flex-direction: column;
+	color: black;
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	font-size: 10px;
+
+	.name {
+		margin-bottom: 8px;
+	}
 `;

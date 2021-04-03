@@ -21,6 +21,7 @@ export default function App() {
 	// App state
 	const [activeTab, setActiveTab] = useState<string>("Accounts");
 	const [rightNavContent, setRightNavContent] = useState<JSX.Element | null>(null);
+	const [tabOptions, setTabOptions] = useState<JSX.Element | null>(null);
 	const [status, setStatus] = useState<string>("");
 
 	// Communication
@@ -101,14 +102,14 @@ export default function App() {
 			if (accountsData === null || accountsData === undefined) {
 				content = <WarningCard text={"Please import an accounts file"} onClick={Ipc.requestAccountsFile} setRightNavContent={setRightNavContent} />;
 			} else {
-				content = <AccountsTable accountsData={[...accountsData].sort((x, y) => x.Name.localeCompare(y.Name))} setRightNavContent={setRightNavContent} setAccountsData={setAccountsData} />;
+				content = <AccountsTable setTabOptions={setTabOptions} accountsData={[...accountsData].sort((x, y) => x.Name.localeCompare(y.Name))} setRightNavContent={setRightNavContent} setAccountsData={setAccountsData} />;
 			}
 		break;
 		case "Payments":
 			if (inputData === null || inputData === undefined) {
 				content = <WarningCard text={"Please import an input file"} onClick={Ipc.requestInputFile} setRightNavContent={setRightNavContent} />;
 			} else {
-				content = paymentsData && accountsMap ? <PaymentsTable paymentRows={paymentsData} accountsMap={accountsMap} setPaymentsData={setPaymentsData} setRightNavContent={setRightNavContent} /> : null;
+				content = paymentsData && accountsMap ? <PaymentsTable setTabOptions={setTabOptions} paymentRows={paymentsData} accountsMap={accountsMap} setPaymentsData={setPaymentsData} setRightNavContent={setRightNavContent} /> : null;
 			}
 		break;
 	}
@@ -116,7 +117,7 @@ export default function App() {
 	return (
 		<MainContainer>
 			<ContentContainer>
-				<Tabs tabs={tabs} activeTab={activeTab} />
+				<Tabs tabs={tabs} activeTab={activeTab} tabOptions={tabOptions} />
 				{content}
 			</ContentContainer>
 			<RightNav status={status}>
